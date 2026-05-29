@@ -21,7 +21,36 @@ Desktop app that tracks token usage across AI coding tools (Claude Code, Codex, 
 - React + TypeScript (frontend)
 - Vite (bundler)
 
-## Prerequisites
+## Install
+
+### Linux / macOS (one command)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Haiko333/burnr/main/install.sh | bash
+```
+
+### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/Haiko333/burnr/main/install.ps1 | iex
+```
+
+### Manual download
+
+Grab the latest release for your platform from the [Releases page](https://github.com/Haiko333/burnr/releases/latest).
+
+| Platform | Format |
+|----------|--------|
+| Linux x64 | `.AppImage`, `.deb` |
+| macOS Apple Silicon | `.dmg` |
+| macOS Intel | `.dmg` |
+| Windows x64 | `.msi`, `.exe` |
+
+---
+
+## Build from source
+
+### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18+)
 - [Rust](https://www.rust-lang.org/tools/install) (stable)
@@ -41,8 +70,6 @@ sudo dnf install webkit2gtk4.1-devel gtk3-devel libappindicator-gtk3-devel librs
 ```
 
 ### macOS
-
-Xcode Command Line Tools:
 
 ```bash
 xcode-select --install
