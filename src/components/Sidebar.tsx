@@ -33,9 +33,6 @@ function Sidebar({ activeTool, onSelectTool, toolAvailability, onOpenSettings }:
             >
               <span className="sidebar-item-icon">{tool.icon}</span>
               <span className="sidebar-item-label">{t(tool.labelKey)}</span>
-              {!available && tool.id !== "all" && (
-                <span className="sidebar-badge">{t("sidebar.noData")}</span>
-              )}
             </button>
           );
         })}
