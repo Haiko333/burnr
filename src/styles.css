@@ -15,12 +15,12 @@
   --accent-dim: #4c1d95;
   --accent-surface: rgba(124, 58, 237, 0.1);
   --accent-surface-hover: rgba(124, 58, 237, 0.18);
-  --heatmap-0: #1a1a1a;
+  --heatmap-0: #222222;
   --heatmap-1: #2e1065;
   --heatmap-2: #5b21b6;
   --heatmap-3: #7c3aed;
   --heatmap-4: #a78bfa;
-  --heatmap-border: transparent;
+  --heatmap-border: #333333;
   --radius: 10px;
   --radius-sm: 6px;
   --radius-lg: 16px;
