@@ -47,9 +47,8 @@ function getWeeksArray(dailyUsage: DailyUsage[]): { date: string; cost: number }
   return weeks;
 }
 
-function getMonthLabels(weeks: { date: string; cost: number }[][]): { label: string; col: number }[] {
+function getMonthLabels(weeks: { date: string; cost: number }[][], months: string[]): { label: string; col: number }[] {
   const labels: { label: string; col: number }[] = [];
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   let lastMonth = -1;
 
   for (let i = 0; i < weeks.length; i++) {
@@ -69,7 +68,9 @@ function Heatmap({ dailyUsage }: HeatmapProps) {
   const { t } = useTranslation();
   const weeks = getWeeksArray(dailyUsage);
   const maxCost = Math.max(...dailyUsage.map((d) => d.costUsd), 1);
-  const monthLabels = getMonthLabels(weeks);
+  const months = t("heatmap.months", { returnObjects: true }) as string[];
+  const days = t("heatmap.days", { returnObjects: true }) as string[];
+  const monthLabels = getMonthLabels(weeks, months);
 
   return (
     <div className="heatmap-container">
@@ -83,13 +84,9 @@ function Heatmap({ dailyUsage }: HeatmapProps) {
         </div>
         <div className="heatmap-body">
           <div className="heatmap-days">
-            <span></span>
-            <span>Mon</span>
-            <span></span>
-            <span>Wed</span>
-            <span></span>
-            <span>Fri</span>
-            <span></span>
+            {days.map((d, i) => (
+              <span key={i}>{d}</span>
+            ))}
           </div>
           <div className="heatmap-grid" style={{ gridTemplateColumns: `repeat(${weeks.length}, 1fr)` }}>
             {weeks.map((week, wi) =>

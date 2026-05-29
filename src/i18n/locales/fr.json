@@ -15,7 +15,9 @@
   },
   "heatmap": {
     "less": "Moins",
-    "more": "Plus"
+    "more": "Plus",
+    "days": ["", "Lun", "", "Mer", "", "Ven", ""],
+    "months": ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"]
   },
   "stats": {
     "mostUsedModel": "Modèle le Plus Utilisé",
