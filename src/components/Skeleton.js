@@ -1,6 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-function SkeletonDashboard() {
-    return (_jsxs("div", { className: "skeleton-dashboard", children: [_jsxs("div", { className: "skeleton-header", children: [_jsx("div", { className: "skeleton-block skeleton-title" }), _jsxs("div", { className: "skeleton-header-stats", children: [_jsx("div", { className: "skeleton-block skeleton-stat" }), _jsx("div", { className: "skeleton-block skeleton-stat" }), _jsx("div", { className: "skeleton-block skeleton-stat" }), _jsx("div", { className: "skeleton-block skeleton-stat" })] })] }), _jsx("div", { className: "skeleton-block skeleton-heatmap" }), _jsxs("div", { className: "skeleton-cards", children: [_jsx("div", { className: "skeleton-block skeleton-card" }), _jsx("div", { className: "skeleton-block skeleton-card" }), _jsx("div", { className: "skeleton-block skeleton-card" }), _jsx("div", { className: "skeleton-block skeleton-card" })] }), _jsx("div", { className: "skeleton-block skeleton-table" })] }));
-}
-export default SkeletonDashboard;
-//# sourceMappingURL=Skeleton.js.map

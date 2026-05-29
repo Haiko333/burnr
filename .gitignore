@@ -42,6 +42,10 @@ src-tauri/gen/schemas/
 result.txt
 claude_usage.py
 
+# Compiled TS output in src/
+src/**/*.js
+src/**/*.js.map
+
 # Coverage
 coverage/
 *.lcov
