@@ -1,0 +1,101 @@
+{
+  "sidebar": {
+    "tools": "Tools",
+    "limits": "Limits",
+    "settings": "Settings",
+    "noData": "No data"
+  },
+  "header": {
+    "input": "Input",
+    "output": "Output",
+    "cache": "Cache",
+    "sessions": "Sessions",
+    "total": "Total",
+    "cost": "Cost"
+  },
+  "heatmap": {
+    "less": "Less",
+    "more": "More"
+  },
+  "stats": {
+    "mostUsedModel": "Most Used Model",
+    "last30Days": "Last 30 Days",
+    "longestStreak": "Longest Streak",
+    "currentStreak": "Current Streak",
+    "activeDays": "active days",
+    "calls": "calls"
+  },
+  "table": {
+    "model": "Model",
+    "input": "Input",
+    "output": "Output",
+    "cacheRead": "Cache Read",
+    "cacheWrite": "Cache Write",
+    "total": "Total",
+    "cost": "Cost",
+    "pct": "%"
+  },
+  "empty": {
+    "noDataYet": "No Data Yet",
+    "claudeCode": "No Claude Code logs found. Start a Claude Code session and logs will appear in ~/.claude/projects/",
+    "codex": "No Codex session logs found. Start a Codex session and logs will appear in ~/.codex/sessions/",
+    "gemini": "No Gemini session logs found. Start a Gemini session and logs will appear in ~/.gemini/sessions/",
+    "cursor": "No Cursor usage data found. Start using Cursor and data will appear automatically.",
+    "windsurf": "No Windsurf usage data found. Start using Windsurf and data will appear automatically.",
+    "all": "No usage data found from any tool. Start using Claude Code, Codex, or Gemini to see stats here.",
+    "autoRefresh": "Data will auto-refresh when new sessions are detected."
+  },
+  "error": {
+    "somethingWrong": "Something went wrong",
+    "retry": "Retry"
+  },
+  "limits": {
+    "refresh": "Refresh",
+    "resetsIn": "Resets in",
+    "used": "used",
+    "noData": "No limits configured"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "export": "Export Data",
+    "exportJson": "Export as JSON",
+    "exportCsv": "Export as CSV",
+    "import": "Import Data",
+    "importFile": "Import File",
+    "merge": "Merge with existing",
+    "overwrite": "Overwrite existing",
+    "sessionTokens": "Session Tokens",
+    "connected": "Connected",
+    "detected": "Detected",
+    "manual": "Manual",
+    "notConfigured": "Not configured",
+    "tokenPlaceholder": "Paste session token...",
+    "overrideToken": "Manual override...",
+    "save": "Save",
+    "howToGetToken": "How to get your token",
+    "helpTitle_claude": "Claude — Session Token",
+    "help_claude_step1": "Open claude.ai in your browser and log in.",
+    "help_claude_step2": "Open DevTools (F12) → Application → Cookies → claude.ai",
+    "help_claude_step3": "Copy \"sessionKey\" → paste in Session Key. Copy \"lastActiveOrg\" → paste in Org ID.",
+    "helpTitle_cursor": "Cursor — Session Token",
+    "help_cursor_step1": "Open Cursor IDE, then open DevTools (Help → Toggle Developer Tools).",
+    "help_cursor_step2": "Go to Application → Cookies → cursor.com",
+    "help_cursor_step3": "Copy the value of \"WorkosCursorSessionToken\" and paste it in the Session Key field.",
+    "helpTitle_windsurf": "Windsurf — Session Token",
+    "help_windsurf_step1": "Open Windsurf IDE, then open DevTools (Help → Toggle Developer Tools).",
+    "help_windsurf_step2": "Go to Application → Cookies → windsurf.com",
+    "help_windsurf_step3": "Copy the session cookie value and paste it in the Session Key field."
+  },
+  "tools": {
+    "all": "All",
+    "claudeCode": "Claude Code",
+    "codex": "Codex",
+    "gemini": "Gemini",
+    "cursor": "Cursor",
+    "windsurf": "Windsurf"
+  }
+}

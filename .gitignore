@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Rust / Cargo
+src-tauri/target/
+**/*.rs.bk
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Tauri build artifacts
+src-tauri/WixTools/
+src-tauri/gen/schemas/
+
+# Dev artifacts
+result.txt
+claude_usage.py
+
+# Coverage
+coverage/
+*.lcov
+
+# Misc
+*.tsbuildinfo

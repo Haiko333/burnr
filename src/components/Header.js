@@ -1,0 +1,11 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useTranslation } from "react-i18next";
+import { RefreshCw } from "lucide-react";
+import { formatTokens, formatCost } from "../utils/format";
+function Header({ totalCostUsd, costIsEstimated, totalInputTokens, totalOutputTokens, totalCacheReadTokens, totalCacheCreationTokens, totalSessions, totalEntries, onRefresh, refreshing, }) {
+    const { t } = useTranslation();
+    const totalTokens = totalInputTokens + totalOutputTokens + totalCacheReadTokens + totalCacheCreationTokens;
+    return (_jsxs("header", { className: "dashboard-header", children: [_jsxs("div", { className: "header-stats", children: [_jsxs("div", { className: "header-stat", children: [_jsx("span", { className: "header-stat-value", children: formatTokens(totalInputTokens) }), _jsx("span", { className: "header-stat-label", children: t("header.input") })] }), _jsxs("div", { className: "header-stat", children: [_jsx("span", { className: "header-stat-value", children: formatTokens(totalOutputTokens) }), _jsx("span", { className: "header-stat-label", children: t("header.output") })] }), _jsxs("div", { className: "header-stat", children: [_jsx("span", { className: "header-stat-value", children: formatTokens(totalCacheReadTokens + totalCacheCreationTokens) }), _jsx("span", { className: "header-stat-label", children: t("header.cache") })] }), _jsxs("div", { className: "header-stat", children: [_jsx("span", { className: "header-stat-value", children: totalSessions }), _jsx("span", { className: "header-stat-label", children: t("header.sessions") })] }), _jsxs("div", { className: "header-stat", children: [_jsx("span", { className: "header-stat-value", children: formatTokens(totalTokens) }), _jsx("span", { className: "header-stat-label", children: t("header.total") })] }), _jsxs("div", { className: "header-stat primary", children: [_jsx("span", { className: "header-stat-value", children: formatCost(totalCostUsd, costIsEstimated) }), _jsx("span", { className: "header-stat-label", children: t("header.cost") })] })] }), _jsx("button", { className: `header-refresh ${refreshing ? "spinning" : ""}`, onClick: onRefresh, title: t("limits.refresh"), children: _jsx(RefreshCw, { size: 16 }) })] }));
+}
+export default Header;
+//# sourceMappingURL=Header.js.map
