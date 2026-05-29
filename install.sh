@@ -1,16 +1,12 @@
 #!/bin/bash
-set -euo pipefail
+set -eu
 
 REPO="Haiko333/burnr"
 API="https://api.github.com/repos/$REPO/releases/latest"
 
 echo "Installing Burnr..."
 
-get_latest_release() {
-  curl -sL "$API" | grep '"tag_name"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/'
-}
-
-VERSION=$(get_latest_release || true)
+VERSION=$(curl -sL "$API" | grep '"tag_name"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
 if [ -z "$VERSION" ]; then
   echo ""
   echo "No release found yet."
