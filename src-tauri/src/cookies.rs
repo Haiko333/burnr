@@ -497,7 +497,7 @@ fn decrypt_chromium_cookie(encrypted: &[u8], keys: &ChromiumKeys) -> Option<Stri
         return String::from_utf8(unpadded.to_vec()).ok();
     }
 
-    // Unrecognized prefix — try as plaintext
+    // Unrecognized prefix - try as plaintext
     String::from_utf8(encrypted.to_vec()).ok()
 }
 

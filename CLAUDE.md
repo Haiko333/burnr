@@ -40,29 +40,29 @@ Data refreshes every 5 minutes + manual refresh button
 
 ### Backend (src-tauri/src/)
 
-- **lib.rs** — Tauri app setup: registers IPC commands, starts file watcher
-- **parser.rs** — Core parsing logic. Defines `ToolSource` enum (ClaudeCode, Codex, Gemini, Cursor, Windsurf), per-tool JSONL structs, pricing tables, and `aggregate_stats()`
-- **commands.rs** — IPC commands: `get_all_stats(billingType, tool)` and `get_available_tools()`. Scans directories with walkdir
-- **limits.rs** — Fetches real usage limits from external APIs (Claude.ai rate_limit_status, Cursor usage API, Windsurf). Reads session tokens from `~/.config/burnr/{tool}_session.txt`. Org IDs from `~/.config/burnr/{tool}_org.txt`. Provides `get_tool_limits`, `get_session_tokens`, `set_session_token` commands
-- **cookies.rs** — Attempts auto-detection of browser cookies (Chromium/KWallet). Falls back silently on failure
-- **watcher.rs** — Background thread using `notify-debouncer-mini` (2s debounce). Watches all tool directories and emits `"jsonl-changed"` event
+- **lib.rs** - Tauri app setup: registers IPC commands, starts file watcher
+- **parser.rs** - Core parsing logic. Defines `ToolSource` enum (ClaudeCode, Codex, Gemini, Cursor, Windsurf), per-tool JSONL structs, pricing tables, and `aggregate_stats()`
+- **commands.rs** - IPC commands: `get_all_stats(billingType, tool)` and `get_available_tools()`. Scans directories with walkdir
+- **limits.rs** - Fetches real usage limits from external APIs (Claude.ai rate_limit_status, Cursor usage API, Windsurf). Reads session tokens from `~/.config/burnr/{tool}_session.txt`. Org IDs from `~/.config/burnr/{tool}_org.txt`. Provides `get_tool_limits`, `get_session_tokens`, `set_session_token` commands
+- **cookies.rs** - Attempts auto-detection of browser cookies (Chromium/KWallet). Falls back silently on failure
+- **watcher.rs** - Background thread using `notify-debouncer-mini` (2s debounce). Watches all tool directories and emits `"jsonl-changed"` event
 
 ### Frontend (src/)
 
-- **App.tsx** — Main orchestrator. Loading/error/empty states, 5min polling interval, tool switching
-- **types.ts** — Shared TypeScript interfaces matching Rust's camelCase serialized output
-- **toolsConfig.tsx** — Tool list configuration with SVG icons
-- **i18n/** — i18next setup with en.json/fr.json translations
-- **hooks/useTheme.ts** — Dark/light theme with CSS variable switching via `data-theme` attribute
-- **components/TitleBar.tsx** — Custom window controls (minimize/maximize/close), no OS decorations
-- **components/Sidebar.tsx** — Tool list, inline Limits component, Settings button
-- **components/Limits.tsx** — Progress bars showing API-fetched usage limits (5min auto-refresh, always visible with empty state)
-- **components/Settings.tsx** — Language, theme, session token management (per-tool help icons), export/import
-- **components/Header.tsx** — Stats row: Input, Output, Cache, Sessions, Total, Cost + refresh button
-- **components/Heatmap.tsx** — 365-day activity grid
-- **components/StatCards.tsx** — Most used model, 30d cost, streaks
-- **components/ModelTable.tsx** — Per-model breakdown table
-- **styles.css** — Dark/light themes via CSS variables, purple-only accent palette
+- **App.tsx** - Main orchestrator. Loading/error/empty states, 5min polling interval, tool switching
+- **types.ts** - Shared TypeScript interfaces matching Rust's camelCase serialized output
+- **toolsConfig.tsx** - Tool list configuration with SVG icons
+- **i18n/** - i18next setup with en.json/fr.json translations
+- **hooks/useTheme.ts** - Dark/light theme with CSS variable switching via `data-theme` attribute
+- **components/TitleBar.tsx** - Custom window controls (minimize/maximize/close), no OS decorations
+- **components/Sidebar.tsx** - Tool list, inline Limits component, Settings button
+- **components/Limits.tsx** - Progress bars showing API-fetched usage limits (5min auto-refresh, always visible with empty state)
+- **components/Settings.tsx** - Language, theme, session token management (per-tool help icons), export/import
+- **components/Header.tsx** - Stats row: Input, Output, Cache, Sessions, Total, Cost + refresh button
+- **components/Heatmap.tsx** - 365-day activity grid
+- **components/StatCards.tsx** - Most used model, 30d cost, streaks
+- **components/ModelTable.tsx** - Per-model breakdown table
+- **styles.css** - Dark/light themes via CSS variables, purple-only accent palette
 
 ### Data Sources
 
@@ -99,7 +99,7 @@ Data refreshes every 5 minutes + manual refresh button
 
 ## Key Conventions
 
-- Rust output structs use `#[serde(rename_all = "camelCase")]` — TypeScript interfaces must match
+- Rust output structs use `#[serde(rename_all = "camelCase")]` - TypeScript interfaces must match
 - `ToolSource` serializes as kebab-case (`"claude-code"`, `"codex"`, `"gemini"`, `"cursor"`, `"windsurf"`)
 - `BillingType` serializes as lowercase (`"subscription"`, `"api"`)
 - i18n: all UI strings go through `react-i18next` `t()` function, translations in `src/i18n/locales/`

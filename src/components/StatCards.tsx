@@ -78,7 +78,7 @@ function StatCards({ dailyUsage, models, costIsEstimated }: StatCardsProps) {
         </div>
         <div className="stat-card-content">
           <span className="stat-card-value">
-            {topModel ? topModel.model.replace("claude-", "").replace(/-\d.*$/, "") : "—"}
+            {topModel ? topModel.model.replace("claude-", "").replace(/-\d.*$/, "") : "-"}
           </span>
           <span className="stat-card-label">{t("stats.mostUsedModel")}</span>
           <span className="stat-card-detail">

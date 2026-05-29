@@ -2,7 +2,7 @@
 
 Desktop app that tracks token usage across AI coding tools (Claude Code, Codex, Gemini, Cursor, Windsurf).
 
-100% local — no data sent online. Reads JSONL session logs from your filesystem.
+100% local - no data sent online. Reads JSONL session logs from your filesystem.
 
 ## Features
 
