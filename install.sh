@@ -7,12 +7,19 @@ API="https://api.github.com/repos/$REPO/releases/latest"
 echo "Installing Burnr..."
 
 get_latest_release() {
-  curl -s "$API" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/'
+  curl -sL "$API" | grep '"tag_name"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/'
 }
 
-VERSION=$(get_latest_release)
+VERSION=$(get_latest_release || true)
 if [ -z "$VERSION" ]; then
-  echo "Error: Could not fetch latest release."
+  echo ""
+  echo "No release found yet."
+  echo "Burnr hasn't published a release. Build from source instead:"
+  echo ""
+  echo "  git clone https://github.com/$REPO.git && cd burnr"
+  echo "  npm install && npm run tauri build"
+  echo ""
+  echo "Or check: https://github.com/$REPO/releases"
   exit 1
 fi
 
