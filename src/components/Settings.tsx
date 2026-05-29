@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "@tauri-apps/api/core";
-import { X, Download, Upload, HelpCircle } from "lucide-react";
+import { X, Download, Upload, HelpCircle, Eye, EyeOff } from "lucide-react";
 import { GlobalStats } from "../types";
 import { Theme } from "../hooks/useTheme";
 
@@ -10,6 +10,8 @@ interface SessionTokenInfo {
   hasToken: boolean;
   source: "manual" | "detected" | "none";
   browser: string | null;
+  maskedToken: string | null;
+  maskedOrg: string | null;
 }
 
 interface SettingsProps {
@@ -64,6 +66,7 @@ function Settings({ isOpen, onClose, theme, onThemeChange, stats }: SettingsProp
   const [tokens, setTokens] = useState<SessionTokenInfo[]>([]);
   const [tokenInputs, setTokenInputs] = useState<Record<string, string>>({});
   const [helpForTool, setHelpForTool] = useState<string | null>(null);
+  const [visibleTokens, setVisibleTokens] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (isOpen) {
@@ -181,6 +184,24 @@ function Settings({ isOpen, onClose, theme, onThemeChange, stats }: SettingsProp
                           : t("settings.notConfigured")}
                     </span>
                   </div>
+                  {tok.hasToken && tok.maskedToken && (
+                    <div className="settings-token-saved">
+                      <code className="settings-token-masked">
+                        {visibleTokens[tok.tool] ? tok.maskedToken : "••••••••••••"}
+                      </code>
+                      {tok.maskedOrg && (
+                        <code className="settings-token-masked">
+                          {visibleTokens[tok.tool] ? tok.maskedOrg : "••••••••"}
+                        </code>
+                      )}
+                      <button
+                        className="settings-token-toggle"
+                        onClick={() => setVisibleTokens((prev) => ({ ...prev, [tok.tool]: !prev[tok.tool] }))}
+                      >
+                        {visibleTokens[tok.tool] ? <EyeOff size={13} /> : <Eye size={13} />}
+                      </button>
+                    </div>
+                  )}
                   <div className="settings-token-input">
                     <input
                       type="password"

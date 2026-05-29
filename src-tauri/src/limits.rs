@@ -77,6 +77,17 @@ pub struct SessionTokenInfo {
     pub has_token: bool,
     pub source: String, // "manual", "detected", "none"
     pub browser: Option<String>,
+    pub masked_token: Option<String>,
+    pub masked_org: Option<String>,
+}
+
+fn mask_value(val: &str) -> String {
+    let len = val.len();
+    if len <= 8 {
+        "••••••••".to_string()
+    } else {
+        format!("{}••••{}", &val[..4], &val[len - 4..])
+    }
 }
 
 #[tauri::command]
@@ -87,25 +98,38 @@ pub fn get_session_tokens() -> Vec<SessionTokenInfo> {
     tools
         .iter()
         .map(|t| {
-            let manual_path = session_file_path(t);
-            let has_manual = manual_path
+            let manual_token = session_file_path(t)
                 .and_then(|p| fs::read_to_string(p).ok())
-                .map(|s| !s.trim().is_empty())
-                .unwrap_or(false);
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty());
+
+            let manual_org = config_dir()
+                .map(|d| d.join(format!("{}_org.txt", t)))
+                .and_then(|p| fs::read_to_string(p).ok())
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty());
 
             let cookie_info = detected.iter().find(|d| d.tool == *t);
             let has_detected = cookie_info.map(|c| c.session_key.is_some()).unwrap_or(false);
 
-            let (has_token, source, browser) = if has_manual {
-                (true, "manual".to_string(), None)
+            let (has_token, source, browser, masked_token, masked_org) = if manual_token.is_some() {
+                (
+                    true,
+                    "manual".to_string(),
+                    None,
+                    manual_token.as_deref().map(mask_value),
+                    manual_org.as_deref().map(mask_value),
+                )
             } else if has_detected {
                 (
                     true,
                     "detected".to_string(),
                     cookie_info.and_then(|c| c.browser.clone()),
+                    cookie_info.and_then(|c| c.session_key.as_deref().map(mask_value)),
+                    cookie_info.and_then(|c| c.org_id.as_deref().map(mask_value)),
                 )
             } else {
-                (false, "none".to_string(), None)
+                (false, "none".to_string(), None, None, None)
             };
 
             SessionTokenInfo {
@@ -113,6 +137,8 @@ pub fn get_session_tokens() -> Vec<SessionTokenInfo> {
                 has_token,
                 source,
                 browser,
+                masked_token,
+                masked_org,
             }
         })
         .collect()
