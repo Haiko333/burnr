@@ -68,10 +68,35 @@ case "$OS" in
       echo "URL: $URL"
       curl -fL "$URL" -o "$DEST"
       chmod +x "$DEST"
+
+      # Create .desktop entry so it appears in app launcher
+      DESKTOP_DIR="$HOME/.local/share/applications"
+      ICON_DIR="$HOME/.local/share/icons"
+      mkdir -p "$DESKTOP_DIR" "$ICON_DIR"
+
+      # Download icon
+      curl -sL "https://raw.githubusercontent.com/$REPO/main/src-tauri/icons/icon.png" -o "$ICON_DIR/burnr.png"
+
+      cat > "$DESKTOP_DIR/burnr.desktop" << DESKTOP
+[Desktop Entry]
+Name=Burnr
+Comment=AI coding tools token usage tracker
+Exec=$DEST
+Icon=$ICON_DIR/burnr.png
+Type=Application
+Categories=Development;Utility;
+StartupWMClass=burnr
+DESKTOP
+
+      # Update desktop database if available
+      if command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "$DESKTOP_DIR" 2>/dev/null || true
+      fi
+
       echo ""
       echo "Installed to $DEST"
-      echo "Run with: burnr"
-      echo "(Make sure ~/.local/bin is in your PATH)"
+      echo "Desktop entry created — Burnr should appear in your app launcher."
+      echo "(You may need to log out/in or restart your panel)"
     else
       echo "Error: Unsupported architecture $ARCH"
       exit 1
