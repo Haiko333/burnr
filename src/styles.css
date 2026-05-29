@@ -679,13 +679,11 @@
 }
 
 .limits-empty {
-  padding: 0.6rem 0;
-  text-align: center;
+  padding: 0.4rem 0;
 }
 
-.limits-empty span {
-  font-size: 0.7rem;
-  color: var(--text-muted);
+.limits-section:has(.limits-empty) {
+  opacity: 0.35;
 }
 
 .limits-refresh {

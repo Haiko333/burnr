@@ -61,9 +61,7 @@ function Limits({ activeTool }: LimitsProps) {
         </button>
       </div>
       {filteredLimits.length === 0 ? (
-        <div className="limits-empty">
-          <span>{t("limits.noData")}</span>
-        </div>
+        <div className="limits-empty" />
       ) : (
         <div className="limits-list">
           {filteredLimits.map((limit) => (
