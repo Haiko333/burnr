@@ -2,77 +2,77 @@
   "sidebar": {
     "tools": "Outils",
     "limits": "Limites",
-    "settings": "Parametres",
-    "noData": "Aucune donnee"
+    "settings": "Paramètres",
+    "noData": "Aucune donnée"
   },
   "header": {
-    "input": "Entree",
+    "input": "Entrée",
     "output": "Sortie",
     "cache": "Cache",
     "sessions": "Sessions",
     "total": "Total",
-    "cost": "Cout"
+    "cost": "Coût"
   },
   "heatmap": {
     "less": "Moins",
     "more": "Plus"
   },
   "stats": {
-    "mostUsedModel": "Modele le Plus Utilise",
+    "mostUsedModel": "Modèle le Plus Utilisé",
     "last30Days": "30 Derniers Jours",
-    "longestStreak": "Plus Longue Serie",
-    "currentStreak": "Serie Actuelle",
+    "longestStreak": "Plus Longue Série",
+    "currentStreak": "Série Actuelle",
     "activeDays": "jours actifs",
     "calls": "appels"
   },
   "table": {
-    "model": "Modele",
-    "input": "Entree",
+    "model": "Modèle",
+    "input": "Entrée",
     "output": "Sortie",
     "cacheRead": "Cache Lu",
-    "cacheWrite": "Cache Ecrit",
+    "cacheWrite": "Cache Écrit",
     "total": "Total",
-    "cost": "Cout",
+    "cost": "Coût",
     "pct": "%"
   },
   "empty": {
-    "noDataYet": "Aucune Donnee",
-    "claudeCode": "Aucun log Claude Code trouve. Demarrez une session pour voir les logs dans ~/.claude/projects/",
-    "codex": "Aucun log Codex trouve. Demarrez une session Codex dans ~/.codex/sessions/",
-    "gemini": "Aucun log Gemini trouve. Demarrez une session Gemini dans ~/.gemini/sessions/",
-    "cursor": "Aucune donnee Cursor trouvee. Commencez a utiliser Cursor.",
-    "windsurf": "Aucune donnee Windsurf trouvee. Commencez a utiliser Windsurf.",
-    "all": "Aucune donnee trouvee. Commencez a utiliser un outil pour voir les statistiques.",
-    "autoRefresh": "Les donnees se rafraichissent automatiquement."
+    "noDataYet": "Aucune Donnée",
+    "claudeCode": "Aucun log Claude Code trouvé. Démarrez une session pour voir les logs dans ~/.claude/projects/",
+    "codex": "Aucun log Codex trouvé. Démarrez une session Codex dans ~/.codex/sessions/",
+    "gemini": "Aucun log Gemini trouvé. Démarrez une session Gemini dans ~/.gemini/sessions/",
+    "cursor": "Aucune donnée Cursor trouvée. Commencez à utiliser Cursor.",
+    "windsurf": "Aucune donnée Windsurf trouvée. Commencez à utiliser Windsurf.",
+    "all": "Aucune donnée trouvée. Commencez à utiliser un outil pour voir les statistiques.",
+    "autoRefresh": "Les données se rafraîchissent automatiquement."
   },
   "error": {
     "somethingWrong": "Une erreur est survenue",
-    "retry": "Reessayer"
+    "retry": "Réessayer"
   },
   "limits": {
-    "refresh": "Rafraichir",
-    "resetsIn": "Reinitialisation dans",
-    "used": "utilise",
-    "noData": "Aucune limite configuree"
+    "refresh": "Rafraîchir",
+    "resetsIn": "Réinitialisation dans",
+    "used": "utilisé",
+    "noData": "Aucune limite configurée"
   },
   "settings": {
-    "title": "Parametres",
+    "title": "Paramètres",
     "language": "Langue",
-    "theme": "Theme",
+    "theme": "Thème",
     "dark": "Sombre",
     "light": "Clair",
-    "export": "Exporter les Donnees",
+    "export": "Exporter les Données",
     "exportJson": "Exporter en JSON",
     "exportCsv": "Exporter en CSV",
-    "import": "Importer des Donnees",
+    "import": "Importer des Données",
     "importFile": "Importer un Fichier",
     "merge": "Fusionner avec l'existant",
-    "overwrite": "Ecraser l'existant",
+    "overwrite": "Écraser l'existant",
     "sessionTokens": "Jetons de Session",
-    "connected": "Connecte",
-    "detected": "Detecte",
+    "connected": "Connecté",
+    "detected": "Détecté",
     "manual": "Manuel",
-    "notConfigured": "Non configure",
+    "notConfigured": "Non configuré",
     "tokenPlaceholder": "Coller le jeton de session...",
     "overrideToken": "Remplacement manuel...",
     "save": "Enregistrer",

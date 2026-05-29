@@ -6,6 +6,7 @@ import { RefreshCw } from "lucide-react";
 import { useTheme } from "./hooks/useTheme";
 import TitleBar from "./components/TitleBar";
 import ResizeHandles from "./components/ResizeHandles";
+import CustomCursor from "./components/CustomCursor";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Heatmap from "./components/Heatmap";
@@ -108,6 +109,7 @@ function App() {
 
   return (
     <div className="app-layout">
+      <CustomCursor />
       <ResizeHandles />
       <TitleBar />
       <Sidebar
