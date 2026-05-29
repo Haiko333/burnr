@@ -73,7 +73,7 @@ function StatCards({ dailyUsage, models, costIsEstimated }: StatCardsProps) {
   return (
     <div className="stat-cards">
       <div className="stat-card">
-        <div className="stat-card-icon-wrap purple">
+        <div className="stat-card-icon-wrap">
           <Brain size={20} />
         </div>
         <div className="stat-card-content">
@@ -88,7 +88,7 @@ function StatCards({ dailyUsage, models, costIsEstimated }: StatCardsProps) {
       </div>
 
       <div className="stat-card">
-        <div className="stat-card-icon-wrap purple-light">
+        <div className="stat-card-icon-wrap">
           <Calendar size={20} />
         </div>
         <div className="stat-card-content">
@@ -99,7 +99,7 @@ function StatCards({ dailyUsage, models, costIsEstimated }: StatCardsProps) {
       </div>
 
       <div className="stat-card">
-        <div className="stat-card-icon-wrap purple-muted">
+        <div className="stat-card-icon-wrap">
           <Trophy size={20} />
         </div>
         <div className="stat-card-content">
@@ -109,7 +109,7 @@ function StatCards({ dailyUsage, models, costIsEstimated }: StatCardsProps) {
       </div>
 
       <div className="stat-card">
-        <div className="stat-card-icon-wrap purple-bright">
+        <div className="stat-card-icon-wrap">
           <Zap size={20} />
         </div>
         <div className="stat-card-content">

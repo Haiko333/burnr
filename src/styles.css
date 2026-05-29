@@ -922,26 +922,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-.stat-card-icon-wrap.purple {
   background: var(--accent-surface);
   color: var(--accent-light);
-}
-
-.stat-card-icon-wrap.purple-light {
-  background: rgba(139, 92, 246, 0.1);
-  color: #c4b5fd;
-}
-
-.stat-card-icon-wrap.purple-muted {
-  background: rgba(109, 40, 217, 0.1);
-  color: #a78bfa;
-}
-
-.stat-card-icon-wrap.purple-bright {
-  background: rgba(167, 139, 250, 0.12);
-  color: #e9d5ff;
 }
 
 .stat-card-content {
