@@ -1,21 +1,36 @@
 #!/bin/bash
-set -eu
 
 REPO="Haiko333/burnr"
 API="https://api.github.com/repos/$REPO/releases/latest"
 
 echo "Installing Burnr..."
+echo "Fetching latest release from GitHub..."
 
-VERSION=$(curl -sL "$API" | grep '"tag_name"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/' || echo "")
-if [ -z "$VERSION" ]; then
+RESPONSE=$(curl -sL "$API")
+
+# Debug: check if we got a valid response
+if echo "$RESPONSE" | grep -q "Not Found"; then
   echo ""
-  echo "No release found yet."
-  echo "Burnr hasn't published a release. Build from source instead:"
+  echo "No release available yet (build may still be in progress)."
   echo ""
+  echo "Build from source instead:"
   echo "  git clone https://github.com/$REPO.git && cd burnr"
   echo "  npm install && npm run tauri build"
   echo ""
   echo "Or check: https://github.com/$REPO/releases"
+  exit 1
+fi
+
+VERSION=$(echo "$RESPONSE" | grep '"tag_name"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+
+if [ -z "$VERSION" ]; then
+  echo ""
+  echo "Could not parse release version."
+  echo "API response (first 200 chars):"
+  echo "$RESPONSE" | head -c 200
+  echo ""
+  echo ""
+  echo "Check manually: https://github.com/$REPO/releases"
   exit 1
 fi
 
@@ -27,13 +42,14 @@ ARCH="$(uname -m)"
 case "$OS" in
   Linux)
     if [ "$ARCH" = "x86_64" ]; then
-      # Prefer AppImage for universal Linux support
       URL="https://github.com/$REPO/releases/download/$VERSION/burnr_${VERSION#v}_amd64.AppImage"
       DEST="$HOME/.local/bin/burnr"
       mkdir -p "$(dirname "$DEST")"
       echo "Downloading AppImage..."
-      curl -L "$URL" -o "$DEST"
+      echo "URL: $URL"
+      curl -fL "$URL" -o "$DEST"
       chmod +x "$DEST"
+      echo ""
       echo "Installed to $DEST"
       echo "Run with: burnr"
       echo "(Make sure ~/.local/bin is in your PATH)"
@@ -50,13 +66,15 @@ case "$OS" in
     fi
     TMPFILE="/tmp/burnr.dmg"
     echo "Downloading DMG..."
-    curl -L "$URL" -o "$TMPFILE"
+    echo "URL: $URL"
+    curl -fL "$URL" -o "$TMPFILE"
     echo "Mounting DMG..."
     hdiutil attach "$TMPFILE" -quiet
     echo "Installing to /Applications..."
     cp -R "/Volumes/Burnr/Burnr.app" /Applications/
     hdiutil detach "/Volumes/Burnr" -quiet
     rm "$TMPFILE"
+    echo ""
     echo "Installed to /Applications/Burnr.app"
     echo "Run from Launchpad or: open /Applications/Burnr.app"
     ;;
