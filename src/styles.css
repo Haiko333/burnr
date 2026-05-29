@@ -34,23 +34,23 @@
 }
 
 [data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f4f4f5;
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #f1f3f5;
   --bg-card: #ffffff;
-  --bg-hover: #f4f4f5;
-  --bg-sidebar: #fafafa;
-  --border: #e4e4e7;
-  --border-light: #d4d4d8;
-  --text-primary: #18181b;
-  --text-secondary: #52525b;
-  --text-muted: #a1a1aa;
+  --bg-hover: #e9ecef;
+  --bg-sidebar: #f1f3f5;
+  --border: #ced4da;
+  --border-light: #adb5bd;
+  --text-primary: #212529;
+  --text-secondary: #495057;
+  --text-muted: #868e96;
   --accent: #7c3aed;
-  --accent-light: #8b5cf6;
-  --accent-muted: #6d28d9;
-  --accent-dim: #ddd6fe;
-  --accent-surface: rgba(124, 58, 237, 0.06);
-  --accent-surface-hover: rgba(124, 58, 237, 0.12);
-  --heatmap-0: #f4f4f5;
+  --accent-light: #6d28d9;
+  --accent-muted: #5b21b6;
+  --accent-dim: #ede9fe;
+  --accent-surface: rgba(124, 58, 237, 0.08);
+  --accent-surface-hover: rgba(124, 58, 237, 0.15);
+  --heatmap-0: #e9ecef;
   --heatmap-1: #ede9fe;
   --heatmap-2: #c4b5fd;
   --heatmap-3: #8b5cf6;
@@ -140,17 +140,16 @@
 
 .cursor-ring {
   position: fixed;
-  top: -18px;
-  left: -18px;
-  width: 36px;
-  height: 36px;
-  border: 2px solid var(--accent-light);
+  top: -12px;
+  left: -12px;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--accent);
   border-radius: 50%;
   pointer-events: none;
   z-index: 9998;
-  opacity: 0.5;
+  opacity: 0.6;
   will-change: transform;
-  transition: width 0.2s ease, height 0.2s ease, top 0.2s ease, left 0.2s ease, opacity 0.2s ease;
 }
 
 /* ============ Resize Handles ============ */
@@ -718,7 +717,7 @@
 }
 
 .limits-section:has(.limits-empty) {
-  opacity: 0.35;
+  opacity: 0.6;
 }
 
 .limits-refresh {
@@ -902,13 +901,14 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
 }
 
 .stat-card:hover {
   border-color: var(--border-light);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card-icon-wrap {
