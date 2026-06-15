@@ -342,6 +342,10 @@
   padding-top: 0.75rem;
 }
 
+.sidebar-limits:empty {
+  display: none;
+}
+
 .sidebar-footer {
   padding: 0;
   border-top: 1px solid var(--border);
@@ -712,14 +716,6 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-.limits-empty {
-  padding: 0.4rem 0;
-}
-
-.limits-section:has(.limits-empty) {
-  opacity: 0.6;
 }
 
 .limits-refresh {
@@ -1096,6 +1092,7 @@
   margin-bottom: 0.75rem;
 }
 
+
 .settings-toggle-group {
   display: flex;
   gap: 0.5rem;
@@ -1197,6 +1194,25 @@
 
 .settings-token-status.connected {
   color: var(--accent-light);
+}
+
+.settings-message {
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+}
+
+.settings-message.success {
+  color: var(--accent-light);
+  background: var(--accent-surface);
+  border: 1px solid var(--accent-muted);
+}
+
+.settings-message.error {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .settings-token-input {

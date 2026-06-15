@@ -20,7 +20,7 @@ Tauri v2 desktop app. Rust backend + React/TS frontend. Reads JSONL logs from AI
 
 ```
 JSONL on disk → Rust parser → Tauri IPC → React frontend
-API limits → Rust HTTP → Tauri IPC → Sidebar
+Optional API limits → Rust HTTP → Tauri IPC → Sidebar
 Auto-refresh 5min + manual button
 ```
 
@@ -31,8 +31,7 @@ Auto-refresh 5min + manual button
 | lib.rs | App setup, IPC registration, window icon, file watcher |
 | parser.rs | JSONL parsing, ToolSource enum, pricing tables, aggregate_stats() |
 | commands.rs | get_all_stats, get_available_tools — walkdir scanning |
-| limits.rs | API limits (Claude/Cursor/Windsurf), session token CRUD, masked display |
-| cookies.rs | Browser cookie auto-detection (Chromium/KWallet) |
+| limits.rs | API limits (Claude/Cursor/Windsurf), validated session token CRUD, masked display |
 | watcher.rs | notify-debouncer-mini (2s), emits "jsonl-changed" event |
 
 ### Frontend (src/)
@@ -45,7 +44,7 @@ Auto-refresh 5min + manual button
 | components/ResizeHandles.tsx | Window resize with cursor feedback |
 | components/CustomCursor.tsx | Purple dot + trailing ring |
 | components/Sidebar.tsx | Tool nav, limits (filtered by active tool), settings |
-| components/Limits.tsx | API usage bars, per-tool filtering |
+| components/Limits.tsx | API usage bars, per-tool filtering, hidden when empty |
 | components/Settings.tsx | Language, theme, tokens (masked + reveal toggle) |
 | components/Heatmap.tsx | 365-day grid, i18n days/months |
 | components/StatCards.tsx | Model, 30d cost, streaks |
@@ -71,6 +70,13 @@ Auto-refresh 5min + manual button
 | get_tool_limits | — | Vec\<ToolLimit\> |
 | get_session_tokens | — | Vec\<SessionTokenInfo\> |
 | set_session_token | { tool, token, orgId? } | Result<()> |
+
+## Privacy/Security Notes
+
+- Stats parsing is local-only.
+- The optional Limits panel calls provider usage APIs only when a matching token is configured.
+- Token tool keys are allowlisted (`claude`, `cursor`, `windsurf`) before writing local config files.
+- The production app uses a CSP in `tauri.conf.json`.
 
 ## Conventions
 

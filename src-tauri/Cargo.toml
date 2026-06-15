@@ -1,7 +1,7 @@
 [package]
 name = "burnr"
-version = "0.1.0"
-description = "Token usage stats for Claude Code & Codex"
+version = "0.1.1"
+description = "Token usage stats for AI coding tools"
 authors = ["h41k0"]
 license = "MIT"
 edition = "2021"
@@ -25,12 +25,6 @@ notify = { version = "7", features = ["macos_fsevent"] }
 notify-debouncer-mini = "0.5"
 reqwest = { version = "0.12", features = ["blocking", "json"] }
 tokio = { version = "1", features = ["rt-multi-thread"] }
-rusqlite = { version = "0.31", features = ["bundled"] }
-aes = "0.8"
-aes-gcm = "0.10"
-cbc = { version = "0.1", features = ["block-padding"] }
-pbkdf2 = { version = "0.12", features = ["hmac"] }
-sha1 = "0.10"
 
 [features]
 default = ["custom-protocol"]

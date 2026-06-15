@@ -1,9 +1,12 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
+
+use crate::pricing::calculate_cost;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(rename_all = "kebab-case")]
@@ -62,7 +65,7 @@ struct CodexRawLine {
     payload: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 struct CodexTokenUsage {
     #[serde(default)]
     input_tokens: u64,
@@ -174,139 +177,6 @@ pub struct DailyUsage {
     pub cost_usd: f64,
 }
 
-struct Pricing {
-    input_per_million: f64,
-    output_per_million: f64,
-    cache_read_per_million: f64,
-    cache_creation_per_million: f64,
-}
-
-fn get_claude_pricing(model: &str) -> Pricing {
-    if model.contains("opus") {
-        Pricing {
-            input_per_million: 15.0,
-            output_per_million: 75.0,
-            cache_read_per_million: 1.5,
-            cache_creation_per_million: 18.75,
-        }
-    } else if model.contains("haiku") {
-        Pricing {
-            input_per_million: 0.80,
-            output_per_million: 4.0,
-            cache_read_per_million: 0.08,
-            cache_creation_per_million: 1.0,
-        }
-    } else {
-        Pricing {
-            input_per_million: 3.0,
-            output_per_million: 15.0,
-            cache_read_per_million: 0.30,
-            cache_creation_per_million: 3.75,
-        }
-    }
-}
-
-fn get_codex_pricing(model: &str) -> Pricing {
-    if model.contains("o3") {
-        Pricing {
-            input_per_million: 2.0,
-            output_per_million: 8.0,
-            cache_read_per_million: 0.50,
-            cache_creation_per_million: 2.0,
-        }
-    } else if model.contains("o4-mini") {
-        Pricing {
-            input_per_million: 1.10,
-            output_per_million: 4.40,
-            cache_read_per_million: 0.275,
-            cache_creation_per_million: 1.10,
-        }
-    } else {
-        Pricing {
-            input_per_million: 2.50,
-            output_per_million: 10.0,
-            cache_read_per_million: 1.25,
-            cache_creation_per_million: 2.50,
-        }
-    }
-}
-
-fn get_gemini_pricing(model: &str) -> Pricing {
-    if model.contains("2.5-pro") {
-        Pricing {
-            input_per_million: 1.25,
-            output_per_million: 10.0,
-            cache_read_per_million: 0.3125,
-            cache_creation_per_million: 1.25,
-        }
-    } else if model.contains("2.5-flash") {
-        Pricing {
-            input_per_million: 0.15,
-            output_per_million: 0.60,
-            cache_read_per_million: 0.0375,
-            cache_creation_per_million: 0.15,
-        }
-    } else {
-        Pricing {
-            input_per_million: 1.25,
-            output_per_million: 10.0,
-            cache_read_per_million: 0.3125,
-            cache_creation_per_million: 1.25,
-        }
-    }
-}
-
-fn get_cursor_pricing(model: &str) -> Pricing {
-    if model.contains("gpt-4") {
-        Pricing {
-            input_per_million: 2.50,
-            output_per_million: 10.0,
-            cache_read_per_million: 1.25,
-            cache_creation_per_million: 2.50,
-        }
-    } else if model.contains("claude") {
-        Pricing {
-            input_per_million: 3.0,
-            output_per_million: 15.0,
-            cache_read_per_million: 0.30,
-            cache_creation_per_million: 3.75,
-        }
-    } else {
-        Pricing {
-            input_per_million: 2.0,
-            output_per_million: 8.0,
-            cache_read_per_million: 0.50,
-            cache_creation_per_million: 2.0,
-        }
-    }
-}
-
-fn get_windsurf_pricing(_model: &str) -> Pricing {
-    Pricing {
-        input_per_million: 2.0,
-        output_per_million: 8.0,
-        cache_read_per_million: 0.50,
-        cache_creation_per_million: 2.0,
-    }
-}
-
-fn calculate_cost(tool: ToolSource, model: &str, usage: &TokenUsage) -> f64 {
-    let pricing = match tool {
-        ToolSource::ClaudeCode => get_claude_pricing(model),
-        ToolSource::Codex => get_codex_pricing(model),
-        ToolSource::Gemini => get_gemini_pricing(model),
-        ToolSource::Cursor => get_cursor_pricing(model),
-        ToolSource::Windsurf => get_windsurf_pricing(model),
-    };
-    let input = usage.input_tokens as f64 * pricing.input_per_million / 1_000_000.0;
-    let output = usage.output_tokens as f64 * pricing.output_per_million / 1_000_000.0;
-    let cache_read =
-        usage.cache_read_input_tokens as f64 * pricing.cache_read_per_million / 1_000_000.0;
-    let cache_creation =
-        usage.cache_creation_input_tokens as f64 * pricing.cache_creation_per_million / 1_000_000.0;
-    input + output + cache_read + cache_creation
-}
-
 fn project_name_from_path(path: &Path) -> String {
     path.parent()
         .and_then(|p| {
@@ -319,6 +189,57 @@ fn project_name_from_path(path: &Path) -> String {
         })
         .map(|name| name.replace('-', "/").trim_start_matches('/').to_string())
         .unwrap_or_else(|| "unknown".to_string())
+}
+
+fn project_name_from_cwd(cwd: &str) -> Option<String> {
+    Path::new(cwd)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .filter(|name| !name.trim().is_empty())
+        .map(ToString::to_string)
+}
+
+fn codex_usage_delta(current: &CodexTokenUsage, previous: &CodexTokenUsage) -> CodexTokenUsage {
+    CodexTokenUsage {
+        input_tokens: current.input_tokens.saturating_sub(previous.input_tokens),
+        cached_input_tokens: current
+            .cached_input_tokens
+            .saturating_sub(previous.cached_input_tokens),
+        output_tokens: current.output_tokens.saturating_sub(previous.output_tokens),
+        reasoning_output_tokens: current
+            .reasoning_output_tokens
+            .saturating_sub(previous.reasoning_output_tokens),
+    }
+}
+
+fn token_usage_from_codex_usage(usage: &CodexTokenUsage) -> TokenUsage {
+    TokenUsage {
+        input_tokens: usage.input_tokens,
+        output_tokens: usage.output_tokens + usage.reasoning_output_tokens,
+        cache_read_input_tokens: usage.cached_input_tokens,
+        cache_creation_input_tokens: 0,
+    }
+}
+
+fn parse_codex_usage_value(value: &serde_json::Value) -> Option<CodexTokenUsage> {
+    serde_json::from_value::<CodexTokenUsage>(value.clone()).ok()
+}
+
+fn codex_usage_from_info(
+    info: &serde_json::Value,
+    previous_total_usage: Option<&CodexTokenUsage>,
+) -> Option<(TokenUsage, CodexTokenUsage)> {
+    let total_usage = info.get("total_token_usage").and_then(parse_codex_usage_value)?;
+    let usage = info
+        .get("last_token_usage")
+        .and_then(parse_codex_usage_value)
+        .unwrap_or_else(|| {
+            previous_total_usage
+                .map(|previous| codex_usage_delta(&total_usage, previous))
+                .unwrap_or_else(|| total_usage.clone())
+        });
+
+    Some((token_usage_from_codex_usage(&usage), total_usage))
 }
 
 pub fn parse_claude_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEntry> {
@@ -386,7 +307,7 @@ pub fn parse_claude_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEntr
 }
 
 pub fn parse_codex_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEntry> {
-    let project = project_name_from_path(path);
+    let fallback_project = project_name_from_path(path);
     let file = match File::open(path) {
         Ok(f) => f,
         Err(e) => {
@@ -401,6 +322,7 @@ pub fn parse_codex_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEntry
     let lines: Vec<String> = reader.lines().filter_map(|l| l.ok()).collect();
     let mut session_model = "unknown".to_string();
     let mut session_id = String::new();
+    let mut project_from_cwd: Option<String> = None;
 
     for line in &lines {
         if line.trim().is_empty() {
@@ -416,12 +338,28 @@ pub fn parse_codex_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEntry
                     if let Some(id) = payload.get("id").and_then(|v| v.as_str()) {
                         session_id = id.to_string();
                     }
+                    if let Some(project) = payload
+                        .get("cwd")
+                        .and_then(|v| v.as_str())
+                        .and_then(project_name_from_cwd)
+                    {
+                        project_from_cwd = Some(project);
+                    }
                 }
             }
             Some("turn_context") => {
                 if let Some(payload) = &raw.payload {
                     if let Some(m) = payload.get("model").and_then(|v| v.as_str()) {
                         session_model = m.to_string();
+                    }
+                    if project_from_cwd.is_none() {
+                        if let Some(project) = payload
+                            .get("cwd")
+                            .and_then(|v| v.as_str())
+                            .and_then(project_name_from_cwd)
+                        {
+                            project_from_cwd = Some(project);
+                        }
                     }
                 }
             }
@@ -434,7 +372,9 @@ pub fn parse_codex_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEntry
         path, session_model, session_id
     );
 
+    let project = project_from_cwd.unwrap_or(fallback_project);
     let mut parsed_count = 0u32;
+    let mut previous_total_usage: Option<CodexTokenUsage> = None;
     for line in &lines {
         if line.trim().is_empty() {
             continue;
@@ -462,22 +402,11 @@ pub fn parse_codex_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEntry
             _ => continue,
         };
 
-        let total_usage = match info.get("total_token_usage") {
-            Some(u) => u,
+        let (usage, total_usage) = match codex_usage_from_info(info, previous_total_usage.as_ref()) {
+            Some(parsed) => parsed,
             None => continue,
         };
-
-        let codex_usage: CodexTokenUsage = match serde_json::from_value(total_usage.clone()) {
-            Ok(u) => u,
-            Err(_) => continue,
-        };
-
-        let usage = TokenUsage {
-            input_tokens: codex_usage.input_tokens,
-            output_tokens: codex_usage.output_tokens + codex_usage.reasoning_output_tokens,
-            cache_read_input_tokens: codex_usage.cached_input_tokens,
-            cache_creation_input_tokens: 0,
-        };
+        previous_total_usage = Some(total_usage);
 
         let timestamp = raw
             .timestamp
@@ -574,8 +503,7 @@ pub fn parse_gemini_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEntr
     entries
 }
 
-// Cursor and Windsurf: placeholder parsers using same CodexRawLine format
-// Will be updated when real data format is known
+// Cursor and Windsurf: parse Codex-style token_count JSONL when exposed by the tool.
 pub fn parse_cursor_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEntry> {
     eprintln!("[burnr] cursor: scanning {:?}", path);
     parse_generic_codex_format(path, billing_type, ToolSource::Cursor)
@@ -587,7 +515,7 @@ pub fn parse_windsurf_jsonl(path: &Path, billing_type: BillingType) -> Vec<LogEn
 }
 
 fn parse_generic_codex_format(path: &Path, billing_type: BillingType, tool: ToolSource) -> Vec<LogEntry> {
-    let project = project_name_from_path(path);
+    let fallback_project = project_name_from_path(path);
     let file = match File::open(path) {
         Ok(f) => f,
         Err(_) => return Vec::new(),
@@ -597,6 +525,7 @@ fn parse_generic_codex_format(path: &Path, billing_type: BillingType, tool: Tool
     let mut entries = Vec::new();
     let mut session_model = "unknown".to_string();
     let mut session_id = String::new();
+    let mut project_from_cwd: Option<String> = None;
 
     for line in &lines {
         if line.trim().is_empty() {
@@ -612,6 +541,13 @@ fn parse_generic_codex_format(path: &Path, billing_type: BillingType, tool: Tool
                     if let Some(id) = payload.get("id").and_then(|v| v.as_str()) {
                         session_id = id.to_string();
                     }
+                    if let Some(project) = payload
+                        .get("cwd")
+                        .and_then(|v| v.as_str())
+                        .and_then(project_name_from_cwd)
+                    {
+                        project_from_cwd = Some(project);
+                    }
                 }
             }
             Some("turn_context") => {
@@ -619,12 +555,23 @@ fn parse_generic_codex_format(path: &Path, billing_type: BillingType, tool: Tool
                     if let Some(m) = payload.get("model").and_then(|v| v.as_str()) {
                         session_model = m.to_string();
                     }
+                    if project_from_cwd.is_none() {
+                        if let Some(project) = payload
+                            .get("cwd")
+                            .and_then(|v| v.as_str())
+                            .and_then(project_name_from_cwd)
+                        {
+                            project_from_cwd = Some(project);
+                        }
+                    }
                 }
             }
             _ => {}
         }
     }
 
+    let project = project_from_cwd.unwrap_or(fallback_project);
+    let mut previous_total_usage: Option<CodexTokenUsage> = None;
     for line in &lines {
         if line.trim().is_empty() {
             continue;
@@ -652,22 +599,11 @@ fn parse_generic_codex_format(path: &Path, billing_type: BillingType, tool: Tool
             _ => continue,
         };
 
-        let total_usage = match info.get("total_token_usage") {
-            Some(u) => u,
+        let (usage, total_usage) = match codex_usage_from_info(info, previous_total_usage.as_ref()) {
+            Some(parsed) => parsed,
             None => continue,
         };
-
-        let tok_usage: CodexTokenUsage = match serde_json::from_value(total_usage.clone()) {
-            Ok(u) => u,
-            Err(_) => continue,
-        };
-
-        let usage = TokenUsage {
-            input_tokens: tok_usage.input_tokens,
-            output_tokens: tok_usage.output_tokens + tok_usage.reasoning_output_tokens,
-            cache_read_input_tokens: tok_usage.cached_input_tokens,
-            cache_creation_input_tokens: 0,
-        };
+        previous_total_usage = Some(total_usage);
 
         let timestamp = raw
             .timestamp
@@ -766,7 +702,11 @@ pub fn aggregate_stats(entries: &[LogEntry]) -> GlobalStats {
         })
         .collect();
 
-    projects.sort_by(|a, b| b.total_cost_usd.partial_cmp(&a.total_cost_usd).unwrap());
+    projects.sort_by(|a, b| {
+        b.total_cost_usd
+            .partial_cmp(&a.total_cost_usd)
+            .unwrap_or(Ordering::Equal)
+    });
 
     let mut daily_usage: Vec<DailyUsage> = daily_map.into_values().collect();
     daily_usage.sort_by(|a, b| a.date.cmp(&b.date));

@@ -2,7 +2,7 @@
 
 Desktop app that tracks token usage across AI coding tools (Claude Code, Codex, Gemini, Cursor, Windsurf).
 
-100% local - no data sent online. Reads JSONL session logs from your filesystem.
+Usage stats are computed locally from JSONL session logs on your filesystem. The optional **Limits** panel only appears when you configure a provider session token; in that case Burnr calls that provider's usage endpoint directly from the app to display your current quota.
 
 ## Features
 
@@ -10,10 +10,17 @@ Desktop app that tracks token usage across AI coding tools (Claude Code, Codex, 
 - Cost estimation per model
 - 365-day activity heatmap
 - Per-model breakdown table
-- API usage limits monitoring (Claude, Cursor, Windsurf)
+- Optional API usage limits monitoring (Claude, Cursor, Windsurf)
 - Dark/light theme
 - Multi-language (EN/FR)
 - Export to JSON/CSV
+
+## Privacy
+
+- Token/cost dashboards are generated from local JSONL files.
+- No telemetry or analytics are sent by Burnr.
+- If you configure session tokens for usage limits, those tokens are stored locally and used only to request quota data from the matching provider.
+- Limits are hidden when no quota data is available for the selected tool.
 
 ## Stack
 
@@ -52,7 +59,7 @@ Grab the latest release for your platform from the [Releases page](https://githu
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+)
+- [Node.js](https://nodejs.org/) (v20.19+ or v22.12+)
 - [Rust](https://www.rust-lang.org/tools/install) (stable)
 - Platform-specific dependencies (see below)
 

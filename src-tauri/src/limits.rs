@@ -1,20 +1,33 @@
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use std::path::PathBuf;
+use std::time::Duration;
 
-use crate::cookies;
 use crate::parser::ToolSource;
+
+const ALLOWED_TOKEN_TOOLS: [&str; 3] = ["claude", "cursor", "windsurf"];
+const HTTP_TIMEOUT_SECONDS: u64 = 10;
 
 fn config_dir() -> Option<PathBuf> {
     dirs::config_dir().map(|c| c.join("burnr"))
 }
 
+fn validate_tool_key(tool: &str) -> Result<&'static str, String> {
+    ALLOWED_TOKEN_TOOLS
+        .iter()
+        .copied()
+        .find(|allowed| *allowed == tool)
+        .ok_or_else(|| "Unsupported tool".to_string())
+}
+
 fn session_file_path(tool: &str) -> Option<PathBuf> {
-    config_dir().map(|d| d.join(format!("{}_session.txt", tool)))
+    validate_tool_key(tool)
+        .ok()
+        .and_then(|safe_tool| config_dir().map(|d| d.join(format!("{}_session.txt", safe_tool))))
 }
 
 fn read_session_token(tool: &str) -> Option<String> {
-    // First try manually configured token file
     if let Some(path) = session_file_path(tool) {
         if let Ok(content) = fs::read_to_string(&path) {
             let trimmed = content.trim().to_string();
@@ -23,15 +36,13 @@ fn read_session_token(tool: &str) -> Option<String> {
             }
         }
     }
-    // Fall back to auto-detected browser cookie
-    let detected = cookies::detect_browser_cookies();
-    detected.iter().find(|d| d.tool == tool).and_then(|d| d.session_key.clone())
+    None
 }
 
 fn read_org_id(tool: &str) -> Option<String> {
-    // First try manual org file
+    let safe_tool = validate_tool_key(tool).ok()?;
     if let Some(dir) = config_dir() {
-        let path = dir.join(format!("{}_org.txt", tool));
+        let path = dir.join(format!("{}_org.txt", safe_tool));
         if let Ok(content) = fs::read_to_string(&path) {
             let trimmed = content.trim().to_string();
             if !trimmed.is_empty() {
@@ -39,23 +50,80 @@ fn read_org_id(tool: &str) -> Option<String> {
             }
         }
     }
-    // Fall back to auto-detected cookie
-    let detected = cookies::detect_browser_cookies();
-    detected.iter().find(|d| d.tool == tool).and_then(|d| d.org_id.clone())
+    None
+}
+
+fn ensure_config_dir() -> Result<PathBuf, String> {
+    let dir = config_dir().ok_or("Cannot determine config directory")?;
+    fs::create_dir_all(&dir).map_err(|_| "Could not create config directory".to_string())?;
+    set_private_dir_permissions(&dir)?;
+    Ok(dir)
+}
+
+#[cfg(unix)]
+fn set_private_dir_permissions(path: &PathBuf) -> Result<(), String> {
+    use std::os::unix::fs::PermissionsExt;
+
+    fs::set_permissions(path, fs::Permissions::from_mode(0o700))
+        .map_err(|_| "Could not secure config directory permissions".to_string())
+}
+
+#[cfg(not(unix))]
+fn set_private_dir_permissions(_path: &PathBuf) -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(unix)]
+fn write_private_file(path: PathBuf, content: &str) -> Result<(), String> {
+    use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .mode(0o600)
+        .open(&path)
+        .map_err(|_| "Could not write token file".to_string())?;
+    file.write_all(content.as_bytes())
+        .map_err(|_| "Could not write token file".to_string())?;
+    fs::set_permissions(path, fs::Permissions::from_mode(0o600))
+        .map_err(|_| "Could not secure token file permissions".to_string())
+}
+
+#[cfg(not(unix))]
+fn write_private_file(path: PathBuf, content: &str) -> Result<(), String> {
+    let mut file = OpenOptions::new()
+        .create(true)
+        .truncate(true)
+        .write(true)
+        .open(path)
+        .map_err(|_| "Could not write token file".to_string())?;
+    file.write_all(content.as_bytes())
+        .map_err(|_| "Could not write token file".to_string())
 }
 
 fn write_session_token(tool: &str, token: &str) -> Result<(), String> {
-    let dir = config_dir().ok_or("Cannot determine config directory")?;
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let path = dir.join(format!("{}_session.txt", tool));
-    fs::write(path, token).map_err(|e| e.to_string())
+    let safe_tool = validate_tool_key(tool)?;
+    let trimmed = token.trim();
+    if trimmed.is_empty() {
+        return Err("Session token cannot be empty".to_string());
+    }
+
+    let dir = ensure_config_dir()?;
+    let path = dir.join(format!("{}_session.txt", safe_tool));
+    write_private_file(path, trimmed)
 }
 
 fn write_org_id(tool: &str, org_id: &str) -> Result<(), String> {
-    let dir = config_dir().ok_or("Cannot determine config directory")?;
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let path = dir.join(format!("{}_org.txt", tool));
-    fs::write(path, org_id).map_err(|e| e.to_string())
+    let safe_tool = validate_tool_key(tool)?;
+    let trimmed = org_id.trim();
+    if trimmed.is_empty() {
+        return Ok(());
+    }
+
+    let dir = ensure_config_dir()?;
+    let path = dir.join(format!("{}_org.txt", safe_tool));
+    write_private_file(path, trimmed)
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -75,7 +143,7 @@ pub struct ToolLimit {
 pub struct SessionTokenInfo {
     pub tool: String,
     pub has_token: bool,
-    pub source: String, // "manual", "detected", "none"
+    pub source: String, // "manual", "none"
     pub browser: Option<String>,
     pub masked_token: Option<String>,
     pub masked_org: Option<String>,
@@ -93,52 +161,20 @@ fn mask_value(val: &str) -> String {
 #[tauri::command]
 pub fn get_session_tokens() -> Vec<SessionTokenInfo> {
     let tools = ["claude", "cursor", "windsurf"];
-    let detected = cookies::detect_browser_cookies();
 
     tools
         .iter()
         .map(|t| {
-            let manual_token = session_file_path(t)
-                .and_then(|p| fs::read_to_string(p).ok())
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty());
-
-            let manual_org = config_dir()
-                .map(|d| d.join(format!("{}_org.txt", t)))
-                .and_then(|p| fs::read_to_string(p).ok())
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty());
-
-            let cookie_info = detected.iter().find(|d| d.tool == *t);
-            let has_detected = cookie_info.map(|c| c.session_key.is_some()).unwrap_or(false);
-
-            let (has_token, source, browser, masked_token, masked_org) = if manual_token.is_some() {
-                (
-                    true,
-                    "manual".to_string(),
-                    None,
-                    manual_token.as_deref().map(mask_value),
-                    manual_org.as_deref().map(mask_value),
-                )
-            } else if has_detected {
-                (
-                    true,
-                    "detected".to_string(),
-                    cookie_info.and_then(|c| c.browser.clone()),
-                    cookie_info.and_then(|c| c.session_key.as_deref().map(mask_value)),
-                    cookie_info.and_then(|c| c.org_id.as_deref().map(mask_value)),
-                )
-            } else {
-                (false, "none".to_string(), None, None, None)
-            };
+            let token = read_session_token(t);
+            let org = read_org_id(t);
 
             SessionTokenInfo {
                 tool: t.to_string(),
-                has_token,
-                source,
-                browser,
-                masked_token,
-                masked_org,
+                has_token: token.is_some(),
+                source: if token.is_some() { "manual".to_string() } else { "none".to_string() },
+                browser: None,
+                masked_token: token.as_deref().map(mask_value),
+                masked_org: org.as_deref().map(mask_value),
             }
         })
         .collect()
@@ -146,13 +182,21 @@ pub fn get_session_tokens() -> Vec<SessionTokenInfo> {
 
 #[tauri::command]
 pub fn set_session_token(tool: String, token: String, org_id: Option<String>) -> Result<(), String> {
-    write_session_token(&tool, &token)?;
-    if let Some(org) = org_id {
-        if !org.trim().is_empty() {
-            write_org_id(&tool, org.trim())?;
+    let safe_tool = validate_tool_key(&tool)?;
+    write_session_token(safe_tool, &token)?;
+    if safe_tool == "claude" {
+        if let Some(org) = org_id {
+            write_org_id(safe_tool, &org)?;
         }
     }
     Ok(())
+}
+
+fn http_client() -> Result<reqwest::blocking::Client, String> {
+    reqwest::blocking::Client::builder()
+        .timeout(Duration::from_secs(HTTP_TIMEOUT_SECONDS))
+        .build()
+        .map_err(|_| "Could not create HTTP client".to_string())
 }
 
 #[tauri::command]
@@ -174,39 +218,6 @@ pub fn get_tool_limits() -> Vec<ToolLimit> {
     limits
 }
 
-#[tauri::command]
-pub fn debug_claude_limits() -> String {
-    let session = match read_session_token("claude") {
-        Some(s) => s,
-        None => return "ERROR: No session token found (no cookie detected, no manual override)".to_string(),
-    };
-
-    let org_id = match read_org_id("claude") {
-        Some(id) => id,
-        None => return format!("ERROR: No org_id found. Session token starts with: {}...", &session[..session.len().min(20)]),
-    };
-
-    let url = format!("https://claude.ai/api/organizations/{}/usage", org_id);
-    eprintln!("[burnr] debug: fetching {}", url);
-
-    let client = reqwest::blocking::Client::new();
-    let resp = match client
-        .get(&url)
-        .header("cookie", format!("sessionKey={}", session))
-        .send()
-    {
-        Ok(r) => r,
-        Err(e) => return format!("ERROR: HTTP request failed: {}", e),
-    };
-
-    let status = resp.status();
-    let body = resp.text().unwrap_or_else(|e| format!("(failed to read body: {})", e));
-
-    eprintln!("[burnr] debug: status={}, body={}", status, &body[..body.len().min(500)]);
-
-    format!("status={}\norg_id={}\nurl={}\nbody={}", status, org_id, url, body)
-}
-
 #[derive(Debug, Deserialize)]
 struct ClaudeUsageWindow {
     #[serde(default)]
@@ -222,7 +233,7 @@ fn fetch_claude_limits() -> Option<Vec<ToolLimit>> {
     let url = format!("https://claude.ai/api/organizations/{}/usage", org_id);
     eprintln!("[burnr] claude limits: fetching {}", url);
 
-    let client = reqwest::blocking::Client::new();
+    let client = http_client().ok()?;
     let resp = client
         .get(&url)
         .header("cookie", format!("sessionKey={}", session))
@@ -328,7 +339,7 @@ struct CursorUsageResponse {
 fn fetch_cursor_limits() -> Option<Vec<ToolLimit>> {
     let session = read_session_token("cursor")?;
 
-    let client = reqwest::blocking::Client::new();
+    let client = http_client().ok()?;
     let resp = client
         .get("https://www.cursor.com/api/usage")
         .header("cookie", format!("WorkosCursorSessionToken={}", session))
@@ -363,7 +374,7 @@ fn fetch_cursor_limits() -> Option<Vec<ToolLimit>> {
 fn fetch_windsurf_limits() -> Option<Vec<ToolLimit>> {
     let session = read_session_token("windsurf")?;
 
-    let client = reqwest::blocking::Client::new();
+    let client = http_client().ok()?;
     let resp = client
         .get("https://windsurf.com/api/usage")
         .header("cookie", format!("session={}", session))
@@ -393,4 +404,19 @@ fn fetch_windsurf_limits() -> Option<Vec<ToolLimit>> {
         requests_used: Some(used),
         requests_total: Some(total),
     }])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_tool_key;
+
+    #[test]
+    fn validate_tool_key_rejects_path_traversal_and_unknown_tools() {
+        assert!(validate_tool_key("claude").is_ok());
+        assert!(validate_tool_key("cursor").is_ok());
+        assert!(validate_tool_key("windsurf").is_ok());
+        assert!(validate_tool_key("../claude").is_err());
+        assert!(validate_tool_key("claude/session").is_err());
+        assert!(validate_tool_key("codex").is_err());
+    }
 }

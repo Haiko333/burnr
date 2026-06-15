@@ -1,8 +1,11 @@
 mod commands;
-mod cookies;
 mod limits;
 mod parser;
+mod pricing;
 mod watcher;
+
+#[cfg(test)]
+mod parser_tests;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,8 +17,6 @@ pub fn run() {
             limits::get_tool_limits,
             limits::get_session_tokens,
             limits::set_session_token,
-            limits::debug_claude_limits,
-            cookies::detect_browser_cookies,
         ])
         .setup(|app| {
             use tauri::Manager;

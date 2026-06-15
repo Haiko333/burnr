@@ -21,13 +21,16 @@ function Limits({ activeTool }: LimitsProps) {
   const [limits, setLimits] = useState<ToolLimits[]>([]);
   const [spinning, setSpinning] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const spinnerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchLimits = useCallback(async () => {
+  const fetchLimits = useCallback(async (): Promise<void> => {
     try {
       const data = await invoke<ToolLimits[]>("get_tool_limits");
       setLimits(data);
-    } catch {
-      // non-critical
+    } catch (err) {
+      // Limits are optional; hide the section when the providers cannot be reached.
+      void err;
+      setLimits([]);
     }
   }, []);
 
@@ -36,13 +39,15 @@ function Limits({ activeTool }: LimitsProps) {
     intervalRef.current = setInterval(fetchLimits, REFRESH_INTERVAL);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      if (spinnerTimeoutRef.current) clearTimeout(spinnerTimeoutRef.current);
     };
   }, [fetchLimits]);
 
   const handleRefresh = async () => {
     setSpinning(true);
     await fetchLimits();
-    setTimeout(() => setSpinning(false), 600);
+    if (spinnerTimeoutRef.current) clearTimeout(spinnerTimeoutRef.current);
+    spinnerTimeoutRef.current = setTimeout(() => setSpinning(false), 600);
   };
 
   const filteredLimits = activeTool === "all"
@@ -52,6 +57,10 @@ function Limits({ activeTool }: LimitsProps) {
         return keys ? keys.some((k) => l.tool.toLowerCase().includes(k)) : false;
       });
 
+  if (filteredLimits.length === 0) {
+    return null;
+  }
+
   return (
     <div className="limits-section">
       <div className="limits-header">
@@ -60,31 +69,27 @@ function Limits({ activeTool }: LimitsProps) {
           <RefreshCw size={12} />
         </button>
       </div>
-      {filteredLimits.length === 0 ? (
-        <div className="limits-empty" />
-      ) : (
-        <div className="limits-list">
-          {filteredLimits.map((limit) => (
-            <div key={`${limit.tool}-${limit.limitType}`} className="limit-item">
-              <div className="limit-info">
-                <span className="limit-label">{limit.limitLabel}</span>
-                <span className="limit-pct">{limit.currentUsage.toFixed(0)}%</span>
-              </div>
-              <div className="limit-bar-track">
-                <div
-                  className="limit-bar-fill"
-                  style={{ width: `${Math.min(limit.currentUsage, 100)}%` }}
-                />
-              </div>
-              {limit.resetTime && (
-                <span className="limit-reset">
-                  {t("limits.resetsIn")} {formatResetTime(limit.resetTime)}
-                </span>
-              )}
+      <div className="limits-list">
+        {filteredLimits.map((limit) => (
+          <div key={`${limit.tool}-${limit.limitType}`} className="limit-item">
+            <div className="limit-info">
+              <span className="limit-label">{limit.limitLabel}</span>
+              <span className="limit-pct">{limit.currentUsage.toFixed(0)}%</span>
             </div>
-          ))}
-        </div>
-      )}
+            <div className="limit-bar-track">
+              <div
+                className="limit-bar-fill"
+                style={{ width: `${Math.min(limit.currentUsage, 100)}%` }}
+              />
+            </div>
+            {limit.resetTime && (
+              <span className="limit-reset">
+                {t("limits.resetsIn")} {formatResetTime(limit.resetTime)}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

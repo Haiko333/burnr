@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { invoke } from "@tauri-apps/api/core";
-import { X, Download, Upload, HelpCircle, Eye, EyeOff } from "lucide-react";
+import { X, Download, HelpCircle, Eye, EyeOff } from "lucide-react";
 import { GlobalStats } from "../types";
 import { Theme } from "../hooks/useTheme";
 
 interface SessionTokenInfo {
   tool: string;
   hasToken: boolean;
-  source: "manual" | "detected" | "none";
+  source: "manual" | "none";
   browser: string | null;
   maskedToken: string | null;
   maskedOrg: string | null;
@@ -22,6 +22,19 @@ interface SettingsProps {
   stats: GlobalStats | null;
 }
 
+const FORMULA_PREFIXES = ["=", "+", "-", "@", "\t", "\r"];
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+function escapeCsvValue(value: string | number): string {
+  const raw = String(value);
+  const safeValue = FORMULA_PREFIXES.some((prefix) => raw.startsWith(prefix)) ? `'${raw}` : raw;
+  return `"${safeValue.replace(/"/g, '""')}"`;
+}
+
 function exportAsJson(stats: GlobalStats) {
   const blob = new Blob([JSON.stringify(stats, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -33,25 +46,22 @@ function exportAsJson(stats: GlobalStats) {
 }
 
 function exportAsCsv(stats: GlobalStats) {
-  const rows: string[] = ["project,model,input_tokens,output_tokens,cache_read,cache_write,cost_usd"];
+  const header = "project,model,input_tokens,output_tokens,cache_read,cache_write,cost_usd";
+  const rows = stats.projects.flatMap((project) =>
+    project.modelsUsed.map((model) =>
+      [
+        project.project,
+        model.model,
+        model.inputTokens,
+        model.outputTokens,
+        model.cacheReadTokens,
+        model.cacheCreationTokens,
+        model.costUsd.toFixed(6),
+      ].map(escapeCsvValue).join(",")
+    )
+  );
 
-  for (const project of stats.projects) {
-    for (const model of project.modelsUsed) {
-      rows.push(
-        [
-          project.project,
-          model.model,
-          model.inputTokens,
-          model.outputTokens,
-          model.cacheReadTokens,
-          model.cacheCreationTokens,
-          model.costUsd.toFixed(6),
-        ].join(",")
-      );
-    }
-  }
-
-  const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+  const blob = new Blob([[header, ...rows].join("\n")], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -62,15 +72,20 @@ function exportAsCsv(stats: GlobalStats) {
 
 function Settings({ isOpen, onClose, theme, onThemeChange, stats }: SettingsProps) {
   const { t, i18n } = useTranslation();
-  const [importStrategy, setImportStrategy] = useState<"merge" | "overwrite">("merge");
   const [tokens, setTokens] = useState<SessionTokenInfo[]>([]);
   const [tokenInputs, setTokenInputs] = useState<Record<string, string>>({});
   const [helpForTool, setHelpForTool] = useState<string | null>(null);
   const [visibleTokens, setVisibleTokens] = useState<Record<string, boolean>>({});
+  const [tokenMessage, setTokenMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     if (isOpen) {
-      invoke<SessionTokenInfo[]>("get_session_tokens").then(setTokens).catch(() => {});
+      setTokenMessage(null);
+      invoke<SessionTokenInfo[]>("get_session_tokens")
+        .then(setTokens)
+        .catch((err) => {
+          setTokenMessage({ type: "error", text: getErrorMessage(err) });
+        });
     }
   }, [isOpen]);
 
@@ -81,35 +96,19 @@ function Settings({ isOpen, onClose, theme, onThemeChange, stats }: SettingsProp
     localStorage.setItem("burnr-language", lang);
   };
 
-  const handleImport = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".json,.csv";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        void importStrategy;
-        void reader.result;
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  };
-
   const handleSaveToken = async (tool: string) => {
-    const val = tokenInputs[tool];
+    const val = tokenInputs[tool]?.trim();
     if (!val) return;
-    const orgVal = tokenInputs[`${tool}_org`] || undefined;
+    const orgVal = tokenInputs[`${tool}_org`]?.trim() || undefined;
     try {
+      setTokenMessage(null);
       await invoke("set_session_token", { tool, token: val, orgId: orgVal });
-      setTokens((prev) =>
-        prev.map((t) => (t.tool === tool ? { ...t, hasToken: true, source: "manual" as const } : t))
-      );
+      const refreshedTokens = await invoke<SessionTokenInfo[]>("get_session_tokens");
+      setTokens(refreshedTokens);
       setTokenInputs((prev) => ({ ...prev, [tool]: "", [`${tool}_org`]: "" }));
-    } catch {
-      // handle error silently
+      setTokenMessage({ type: "success", text: t("settings.tokenSaved") });
+    } catch (err) {
+      setTokenMessage({ type: "error", text: getErrorMessage(err) });
     }
   };
 
@@ -162,6 +161,11 @@ function Settings({ isOpen, onClose, theme, onThemeChange, stats }: SettingsProp
 
           <div className="settings-section">
             <h3>{t("settings.sessionTokens")}</h3>
+            {tokenMessage && (
+              <div className={`settings-message ${tokenMessage.type}`}>
+                {tokenMessage.text}
+              </div>
+            )}
             <div className="settings-tokens">
               {tokens.map((tok) => (
                 <div key={tok.tool} className="settings-token-row">
@@ -177,11 +181,9 @@ function Settings({ isOpen, onClose, theme, onThemeChange, stats }: SettingsProp
                       </button>
                     </div>
                     <span className={`settings-token-status ${tok.hasToken ? "connected" : ""}`}>
-                      {tok.source === "detected"
-                        ? `${t("settings.detected")} (${tok.browser})`
-                        : tok.source === "manual"
-                          ? t("settings.manual")
-                          : t("settings.notConfigured")}
+                      {tok.source === "manual"
+                        ? t("settings.manual")
+                        : t("settings.notConfigured")}
                     </span>
                   </div>
                   {tok.hasToken && tok.maskedToken && (
@@ -205,7 +207,7 @@ function Settings({ isOpen, onClose, theme, onThemeChange, stats }: SettingsProp
                   <div className="settings-token-input">
                     <input
                       type="password"
-                      placeholder={tok.hasToken ? t("settings.overrideToken") : "Session key"}
+                      placeholder={tok.hasToken ? t("settings.overrideToken") : t("settings.tokenPlaceholder")}
                       value={tokenInputs[tok.tool] || ""}
                       onChange={(e) =>
                         setTokenInputs((prev) => ({ ...prev, [tok.tool]: e.target.value }))
@@ -214,7 +216,7 @@ function Settings({ isOpen, onClose, theme, onThemeChange, stats }: SettingsProp
                     {tok.tool === "claude" && (
                       <input
                         type="text"
-                        placeholder="Org ID"
+                        placeholder={t("settings.orgIdPlaceholder")}
                         value={tokenInputs[`${tok.tool}_org`] || ""}
                         onChange={(e) =>
                           setTokenInputs((prev) => ({ ...prev, [`${tok.tool}_org`]: e.target.value }))
@@ -256,29 +258,6 @@ function Settings({ isOpen, onClose, theme, onThemeChange, stats }: SettingsProp
             </div>
           </div>
 
-          <div className="settings-section">
-            <h3>{t("settings.import")}</h3>
-            <div className="settings-import">
-              <div className="settings-toggle-group">
-                <button
-                  className={`settings-toggle ${importStrategy === "merge" ? "active" : ""}`}
-                  onClick={() => setImportStrategy("merge")}
-                >
-                  {t("settings.merge")}
-                </button>
-                <button
-                  className={`settings-toggle ${importStrategy === "overwrite" ? "active" : ""}`}
-                  onClick={() => setImportStrategy("overwrite")}
-                >
-                  {t("settings.overwrite")}
-                </button>
-              </div>
-              <button className="settings-btn" onClick={handleImport}>
-                <Upload size={14} />
-                {t("settings.importFile")}
-              </button>
-            </div>
-          </div>
         </div>
 
         {helpForTool && (
