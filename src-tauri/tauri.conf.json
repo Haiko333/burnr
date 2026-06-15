@@ -1,6 +1,6 @@
 {
   "productName": "Burnr",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "identifier": "xyz.burnrapp.burnr",
   "build": {
     "beforeDevCommand": "npm run dev",
