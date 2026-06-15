@@ -336,10 +336,10 @@
 }
 
 .sidebar-limits {
-  margin-top: auto;
   padding: 0 0.75rem;
   border-top: 1px solid var(--border);
   padding-top: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .sidebar-limits:empty {
@@ -349,7 +349,7 @@
 .sidebar-footer {
   padding: 0;
   border-top: 1px solid var(--border);
-  margin-top: 0.5rem;
+  margin-top: auto;
   padding-top: 0.25rem;
 }
 
